@@ -12,12 +12,14 @@ const { rejects } = require("assert");
 global.id=0;
 
 const HOST=ENV.HOST;
+const PORT=ENV.PORT;
 const USER=ENV.USER;
 const PASSWORD=ENV.PASSWORD;
 const DATA=ENV.DATA;
 
 var con = mysql.createConnection({
   host: HOST,
+  port: PORT,
   user: USER,
   password: PASSWORD,
   database: DATA

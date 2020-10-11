@@ -8,8 +8,7 @@ import Switch from "react-switch";
 import SlidingPanel from 'react-sliding-side-panel';
 import Select from 'react-select';
 
-<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBAt6hp7Ewgy6VWck0sYTxsMOHoWftsh3Y&callback=initMap"
-type="text/javascript"></script>
+
 
 const API_KEY=process.env.REACT_APP_MAPS_API;
 
@@ -36,7 +35,7 @@ const options={
   streetViewControl: true,
 };
 
-
+//<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBAt6hp7Ewgy6VWck0sYTxsMOHoWftsh3Y&callback=initMap"type="text/javascript"></script>
 class App extends Component {
 
   constructor(){
@@ -91,9 +90,13 @@ class App extends Component {
           var buff_lng=(res.data[0].lng).toString();
           var buff_time=(res.data[0].timegps).toString();
           var buff_alt=(res.data[0].alt).toString();
+          //console.log(buff_lat);
+          //console.log(buff_lng);
+          //console.log(buff_time);
+          //console.log(buff_alt);
 
           this.setState({
-            coord_text:{lng:buff_lng,lat:buff_lat,alt:buff_alt,time:buff_time}
+            coord_text: { lng: buff_lng, lat: buff_lat, alt: buff_alt, time: buff_time }, 
           });
         }catch(error){
           console.log(Error);
@@ -132,8 +135,11 @@ class App extends Component {
     this.set_timer1();
   }
 
+  
+
   render(){return (
-    
+
+  
     <div>
 
     <title>GPS<span role="img" aria-label="Satellite Antenna">📡</span></title>
