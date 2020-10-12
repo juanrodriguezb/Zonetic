@@ -28,7 +28,8 @@
     "start": "set PORT= 4000 && react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "dev": "node -r dotenv/config bin/www.js"
   },
   "eslintConfig": {
     "extends": "react-app"
