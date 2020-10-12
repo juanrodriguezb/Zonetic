@@ -8,6 +8,7 @@ var ENV = require('./env.json');
 const wait= require("@testing-library/react");
 const { resolve } = require("path");
 const { rejects } = require("assert");
+require('dotenv').config()
 
 global.id=0;
 

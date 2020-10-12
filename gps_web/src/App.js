@@ -9,13 +9,9 @@ import SlidingPanel from 'react-sliding-side-panel';
 import Select from 'react-select';
 
 
-
 const API_KEY=process.env.REACT_APP_MAPS_API;
-
 const API_URL_1=process.env.REACT_APP_API_URL_1;
-
 const API_URL_2=process.env.REACT_APP_API_URL_2;
-
 const API_URL_3=process.env.REACT_APP_API_URL_3;
 
 const mapContainerStyle = {
@@ -90,10 +86,6 @@ class App extends Component {
           var buff_lng=(res.data[0].lng).toString();
           var buff_time=(res.data[0].timegps).toString();
           var buff_alt=(res.data[0].alt).toString();
-          //console.log(buff_lat);
-          //console.log(buff_lng);
-          //console.log(buff_time);
-          //console.log(buff_alt);
 
           this.setState({
             coord_text: { lng: buff_lng, lat: buff_lat, alt: buff_alt, time: buff_time }, 
@@ -135,7 +127,6 @@ class App extends Component {
     this.set_timer1();
   }
 
-  
 
   render(){return (
 
