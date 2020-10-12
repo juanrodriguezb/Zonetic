@@ -7,8 +7,10 @@ import DateTimePicker from 'react-datetime-picker';
 import Switch from "react-switch";
 import SlidingPanel from 'react-sliding-side-panel';
 import Select from 'react-select';
+import dotenv from 'dotenv';
+require('dotenv').config()
 
-
+dotenv.config()
 const API_KEY=process.env.REACT_APP_MAPS_API;
 const API_URL_1=process.env.REACT_APP_API_URL_1;
 const API_URL_2=process.env.REACT_APP_API_URL_2;
@@ -31,7 +33,6 @@ const options={
   streetViewControl: true,
 };
 
-//<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBAt6hp7Ewgy6VWck0sYTxsMOHoWftsh3Y&callback=initMap"type="text/javascript"></script>
 class App extends Component {
 
   constructor(){

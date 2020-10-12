@@ -1,4 +1,4 @@
-
+require('dotenv').config()
 var express = require("express");
 var mysql = require('mysql');
 const stringify= require("querystring");
@@ -8,7 +8,7 @@ var ENV = require('./env.json');
 const wait= require("@testing-library/react");
 const { resolve } = require("path");
 const { rejects } = require("assert");
-require('dotenv').config()
+
 
 global.id=0;
 
