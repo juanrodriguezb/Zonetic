@@ -281,7 +281,7 @@ class App extends Component {
       visible={this.state.sw_history}
       path={this.state.history}
       options={{
-        strokeColor:'#301586',
+        strokeColor:'#8D2781',
       }}
     />
     
