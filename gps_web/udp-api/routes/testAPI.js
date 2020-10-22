@@ -113,6 +113,25 @@ function Gethistory(truck,time_in,time_fin){
 
 }
 
+function Gettime(truck,time_in,time_fin){
+  return new Promise((resolve, reject)=>{
+    con.query((("SELECT lat,lng FROM truckdata WHERE truck = ").concat((truck).toString()," AND timegps BETWEEN ", (time_in).toString(),' and ',(time_fin).toString())),
+      function(err,result){
+        if(err){throw err};
+        var htime=JSON.parse(JSON.stringify(result));
+        return err ? reject(err): resolve(htime);
+      }
+    );
+    con.query((("SELECT timegps FROM truckdata WHERE truck = ").concat((truck).toString()," AND timegps BETWEEN ", (time_in).toString(),' and ',(time_fin).toString())),
+    function(err,result){
+      if(err){throw err};
+      var ttime=JSON.parse(JSON.stringify(result));
+      return err ? reject(err): resolve(ttime);
+    }
+  );
+  });
+}
+
 var server= udp.createSocket('udp4');
 server.bind(5000);
 
@@ -172,6 +191,23 @@ router.post("/history", function(req, res, next) {
     console.error();
   }
   
+});
+
+router.post("/time", function(req, res, res2, next){
+  try{
+    var time_in=req.body.timestamp_in;
+    var time_fin=req.body.timestamp_fin;
+    var truck=req.body.ID;
+    async function Time(){
+      var htime=await Gettime(truck,time_in,time_fin);
+      var ttime=await Gettime(truck,time_in,time_fin);
+      res.json(htime);
+      res2.json(ttime);
+    }
+    Time();
+  }catch(error){
+    console.error();
+  }
 });
 
 router.post("/last", function(req,res, next){
