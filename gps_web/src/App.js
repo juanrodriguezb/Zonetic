@@ -1,13 +1,11 @@
 import React, { Component} from 'react';
-import {GoogleMap,Marker, LoadScript, Polyline} from "@react-google-maps/api";
+import {GoogleMap,Marker, LoadScript, Polyline, InfoWindow} from "@react-google-maps/api";
 import mapStyles from "./mapStyles";
 import axios from 'axios';
 import { Button } from 'rebass';
 import DateTimePicker from 'react-datetime-picker';
 import Switch from "react-switch";
 import SlidingPanel from 'react-sliding-side-panel';
-import DiscreteSlider from './Slide';
-//import Select from 'react-select';
 import dotenv from 'dotenv';
 require('dotenv').config()
 
@@ -15,14 +13,12 @@ dotenv.config()
 const API_KEY=process.env.REACT_APP_MAPS_API;
 const API_URL_1=process.env.REACT_APP_API_URL_1;
 const API_URL_2=process.env.REACT_APP_API_URL_2;
-const API_URL_4=process.env.REACT_APP_API_URL_4;
 const API_URL_6=process.env.REACT_APP_API_URL_6;
 const API_URL_7=process.env.REACT_APP_API_URL_7;
 const API_URL_8=process.env.REACT_APP_API_URL_8;
 const API_URL_9=process.env.REACT_APP_API_URL_9;
-
-var T1 = 1;
-var T2 = 0;
+const API_URL_10=process.env.REACT_APP_API_URL_10;  
+const API_URL_11=process.env.REACT_APP_API_URL_11;
 
 const mapContainerStyle = {
   width: "100vw",
@@ -41,11 +37,30 @@ const options={
   streetViewControl: true,
 };
 
-const valueText = (value) => {
-  //setValueSlider(value);
-};
+const libraries=["places"]
 
-var count = 0;
+//By: https://www.geodatasource.com/developers/javascript
+function distance(lat1, lon1, lat2, lon2, unit) {
+	if ((lat1 === lat2) && (lon1 === lon2)) {
+		return 0;
+	}
+	else {
+		var radlat1 = Math.PI * lat1/180;
+		var radlat2 = Math.PI * lat2/180;
+		var theta = lon1-lon2;
+		var radtheta = Math.PI * theta/180;
+		var dist = Math.sin(radlat1) * Math.sin(radlat2) + Math.cos(radlat1) * Math.cos(radlat2) * Math.cos(radtheta);
+		if (dist > 1) {
+			dist = 1;
+		}
+		dist = Math.acos(dist);
+		dist = dist * 180/Math.PI;
+		dist = dist * 60 * 1.1515;
+		if (unit==="K") { dist = dist * 1.609344 }
+		if (unit==="N") { dist = dist * 0.8684 }
+		return dist;
+	}
+}
 
 class App extends Component {
 
@@ -72,23 +87,40 @@ class App extends Component {
       sw_truck2: false,
       history:[],
       history2:[],
+      Infotime:0,
+      Infotime2:0,
+      Infoposition:{
+        lat:0,
+        lng:0
+      },
+      Infoposition2:{
+        lat:0,
+        lng:0
+      },
+      Inforpm:0,
+      Inforpm2:0,
       date_in:new Date(),
       date_fin:new Date(),
       openPanel:false,
       ID1:{value:"1",label:"Camion 1"},
       ID2:{value:"2",label:"Camion 2"},
       Opt:[],
-      Opt2:[],
-      rm:{value:"XXXX"},
-      rm2:{value:"XXXX"},
+      rm:"XXXX",
+      rm2:"XXXX",
       rmp:[],
       rmp2:[],
       sw_his_tag1:false,
       sw_his_tag2:false,
+      sw_info_tag:false,
+      sw_info_tag2:false,
       sw_tag1:true,
       sw_tag2:false,
-      T1 : 0,
-      T2 : 0
+      T1 : 1,
+      T2 : 0,
+      Isopen:'hidden',
+      Isopen2:'hidden',
+      selectedMarker:null,
+      selectedMarker2:null
 
     }
 
@@ -100,7 +132,7 @@ class App extends Component {
       ID1:((this.state.ID1).value)
     }))
       .then((res) => {
-        console.log('last')
+        console.log('last 1')
         console.log(res.data);
         try{
           this.setState({
@@ -184,18 +216,74 @@ class App extends Component {
 
   }
 
-  callAPI_time(){
-    console.log('got it')
-    axios.post(API_URL_4, ({
+  callAPI_infohistory(){
+
+    var distance_buff = 9999999999; 
+    var history_filtered = {lat:0,lng:0}
+    var rpm_filtered = 0
+
+    for (var i = 0 ; i<=((this.state.history).length - 1) ; i++){
+      var distance_c = distance((this.state.history_filter).lat,(this.state.history_filter).lng,(this.state.history[i]).lat,(this.state.history[i]).lng,'K')
+      if (distance_c<distance_buff) {
+        distance_buff=distance_c
+        history_filtered.lat=(this.state.history[i]).lat
+        history_filtered.lng=(this.state.history[i]).lng
+        rpm_filtered=(this.state.rmp[i]).rpm
+      }
+    }
+
+    axios.post(API_URL_10,({
+      position:history_filtered,
       timestamp_in:(this.state.date_in).getTime(),
       timestamp_fin:(this.state.date_fin).getTime(),
-      ID:((this.state.ID).value)
+      ID1:((this.state.ID1).value)
     }))
-      .then((res)=> {
-        for (var h=0; h<((res.data).length); h++){
-          this.state.thistory.push(((res.data)[h]).timegps)
-        } console.log(this.state.thistory)
-      }).catch(err => console.log(err));
+
+    .then((res) => {
+      var buff = (res.data);
+      console.log(buff[0].timegps);
+      this.setState({
+        Infotime:buff[0].timegps,
+        Infoposition:history_filtered,
+        Inforpm:rpm_filtered,
+        sw_info_tag:true
+      })
+    })
+
+  }
+
+  callAPI_infohistory2(){
+
+    var distance_buff2 = 9999999999; 
+    var history_filtered2 = {lat:0,lng:0}
+
+    for (var i = 0 ; i<=((this.state.history2).length - 1) ; i++){
+      var distance_c2 = distance((this.state.history_filter2).lat,(this.state.history_filter2).lng,(this.state.history2[i]).lat,(this.state.history2[i]).lng,'K')
+      if (distance_c2<distance_buff2) {
+        distance_buff2=distance_c2
+        history_filtered2.lat=(this.state.history2[i]).lat
+        history_filtered2.lng=(this.state.history2[i]).lng
+        rpm_filtered2=(this.state.rmp2[i]).rpm
+      }
+    }
+
+    axios.post(API_URL_11,({
+      position:history_filtered2,
+      timestamp_in:(this.state.date_in).getTime(),
+      timestamp_fin:(this.state.date_fin).getTime(),
+      ID2:((this.state.ID2).value)
+    }))
+
+    .then((res) => {
+      var buff = (res.data);
+      console.log(buff[0].timegps);
+      this.setState({
+        Infotime2:buff[0].timegps,
+        Infoposition2:history_filtered2,
+        sw_info_tag2:true
+      })
+    })
+
   }
 
   callAPI_rmp(){
@@ -210,6 +298,7 @@ class App extends Component {
         rmp:rrp
       });
     }).catch(err => console.log(err));
+    return rmp
   }
 
   callAPI_rmp2(){
@@ -242,10 +331,6 @@ class App extends Component {
     this.timer4 = setInterval(()=>{this.callAPI_history2()},1000);
   }
 
-  set_timer5(){
-    this.timer3 = setInterval(()=>{this.callAPI_time()},1000);
-  }
-
   set_timer6(){
     this.timer6 = setInterval(()=>{this.callAPI_rmp()},1000);
   }
@@ -260,7 +345,6 @@ class App extends Component {
     this.set_timer3();
     this.set_timer2();
     this.set_timer4();
-    this.set_timer5();
     this.set_timer6();
     this.set_timer7();
   }
@@ -279,40 +363,6 @@ class App extends Component {
 
   set_truck2_unchecked(){
     this.setState({T2: 0});
-  }
-
-  set_rmp(){
-    if(!(this.state.rmp === undefined)){
-      if(this.state.T1 === 1){
-        if(!(this.state.count === 10045)){
-          const rm = (this.state.rmp[count].rpm).toString()
-          this.setState({
-            rm
-          });
-          console.log('rm 1')
-          console.log(rm)
-          this.state.count = count + 1;
-        }
-        }
-        }else{
-        this.setState({rm: "XXXX"});
-    }
-  }
-
-  set_rmp2(){
-    if(this.state.T2 === 1){
-      for (var f =0; f<this.rmp2.length; f++){
-        this.setState({
-          rm2: rmp2[f].toString()
-        });
-        var s = 0;
-        for (var y=0; y<20; y++){
-          s = s + y;
-        }
-      }
-    }else{
-      this.setState({rm2: "XXXX"});
-    }
   }
 
   render(){return (
@@ -364,37 +414,6 @@ class App extends Component {
         </h4>
       </div>
 
-      <div style={{position: 'absolute', top:"35.5%", left: "1%", width: "30%", height:"5%", backgroundColor:"white", zIndex:5}}>
-
-
-        <DiscreteSlider
-          visible={this.state.sw_history}
-          marks={this.array()}
-          step={1}
-           getAriaValueText={valueText}
-
-        />
-
-      </div>
-
-
-      <div style={{position:"absolute",top:"63%",left:"1%",width:"15%",height:"16.5%",backgroundColor:"white",zIndex:5}}>
-      </div>
-      <div>
-      <h4 style={{top: "64%", left: "2%"}}>
-       RMP Truck 1
-      </h4>
-      <h4 style={{top:"68.5%", left: "2%"}}>
-        <body>{"RMP: "+this.state.rm}</body>
-      </h4>
-      <h4 style2={{top: "73%", left: "2%"}}>
-        RMP Truck 2
-      </h4>
-      <h4 style={{top: "77.5%", left: "2%"}}>
-        <body>{"RMP: "+this.state.rm2}</body>
-      </h4>
-      </div>
-
       <SlidingPanel
         type={'left'}
        isOpen={this.state.openPanel}
@@ -415,7 +434,7 @@ class App extends Component {
 
         <div style={{position:'absolute',top:"7.5%",left:"11.5%",zIndex:"10"}}>
         <Switch
-          trackColor={{ false: "#767577", true: "#A04194" }}
+          onColor={ '#A5C137'}
           checked={this.state.sw_realtime}
           onChange={(checked)=>{
             if(checked){
@@ -461,7 +480,7 @@ class App extends Component {
 
         <div style={{position:"absolute",top:"12.5%",left:"11.5%",zIndex:"10"}}>
         <Switch
-        trackColor={{ false: "#767577", true: "#A04194" }}
+          onColor={ '#A5C137'}
           checked={this.state.sw_history}
           onChange={(checked)=>{
             if(checked){
@@ -526,7 +545,7 @@ class App extends Component {
 
           <div style={{position:"absolute",top:"40%",left:"11.5%",zIndex:"10"}}>
             <Switch
-              trackColor={{ false: "#767577", true: "#A04194" }}
+              onColor={ '#A5C137'}
               checked={this.state.sw_truck1}
               onChange={(checked)=>{
               if(checked){
@@ -535,6 +554,9 @@ class App extends Component {
               }else{
                 this.set_truck1_unchecked();
               }
+              this.setState({
+                sw_truck1:checked
+              })
               }}
             /> 
           </div>
@@ -543,7 +565,7 @@ class App extends Component {
 
           <div style={{position:"absolute",top:"45%",left:"11.5%",zIndex:"10"}}>
             <Switch
-              trackColor={{ false: "#767577", true: "#A04194" }}
+              onColor={ '#A5C137'}
               checked={this.state.sw_truck2}
               onChange={(checked)=>{
               if(checked){
@@ -552,34 +574,71 @@ class App extends Component {
               }else{
                 this.set_truck2_unchecked();
               }
+              this.setState({
+                sw_truck2:checked
+              })
               }}
             />
+          </div>
+          <div style={{top: "50%", left: "15..5%", zIndex:"10"}}>
+              <img src="./zico.png" alt="Zonetic's logo"></img>
           </div>
       </SlidingPanel>
 
       <div>
         <LoadScript
-         googleMapsApiKey={API_KEY}>
+         googleMapsApiKey={API_KEY}
+         libraries={libraries}>
 
           <GoogleMap 
             mapContainerStyle={mapContainerStyle} 
-            zoom={8} center={center} 
+            zoom={10} center={center} 
             options={options}
            > 
 
             <Polyline
-              visible={this.state.sw_history}
+              visible={this.state.sw_history && this.state.sw_truck1}
               path={this.state.history}
               options={{
-                strokeColor:'#301586',
+                strokeColor:'#8D2781',
+                strokeWeight: 4
+              }}
+              onClick={(e) => {
+                this.setState({
+                  history_filter:{
+                    lat:e.latLng.lat(),
+                    lng:e.latLng.lng()
+                  }
+                });
+                this.callAPI_infohistory();
+                if (this.state.Isopen ==='hidden'){
+                  this.setState({
+                    Isopen:'visible'
+                  })
+                }
               }}
            />
 
             <Polyline
-              visible={this.state.sw_history}
+              visible={this.state.sw_history && this.state.sw_truck2}
               path={this.state.history2}
               options={{
-                strokeColor:'#301586',
+                strokeColor:'#A5C137',
+                strokeWeight: 4
+              }}
+              onClick={(e) => {
+                this.setState({
+                  history_filter2:{
+                    lat:e.latLng.lat(),
+                    lng:e.latLng.lng()
+                  }
+                });
+                this.callAPI_infohistory2();
+                if (this.state.Isopen2 ==='hidden'){
+                  this.setState({
+                    Isopen2:'visible'
+                  })
+                }
               }}
            /> 
     
@@ -618,6 +677,72 @@ class App extends Component {
               icon={"/ubicacion.svg"}
               visible={this.state.sw_his_tag2}
             />
+
+            <Marker
+              position={this.state.Infoposition}
+              onDblClick={()=>{
+                this.setState({sw_info_tag:false})
+                if (this.state.Isopen === 'visible'){
+                 this.setState({
+                   Isopen:'hidden'
+                  })
+               }
+             }}
+              onClick={()=>{
+                this.setState({
+                  selectedMarker:true
+                });
+              }}
+              visible={this.state.sw_info_tag && this.state.sw_history}>
+        
+              {this.state.selectedMarker && this.state.sw_history && this.state.sw_info_tag && (
+                <InfoWindow
+                 onCloseClick={()=>{
+                   this.setState({
+                      selectedMarker:null
+                    })
+                  }}>
+                 <div>
+                  {"Tiempo: "+(((new Date(parseFloat(this.state.Infotime,10))) + "").split("GMT"))[0]+"  "}
+                  {"RPM: "+(this.state.Inforpm)}
+                 </div>
+               </InfoWindow>      
+             )}
+
+            </Marker>
+
+            <Marker
+              position={this.state.Infoposition2}
+              onDblClick={()=>{
+                this.setState({sw_info_tag2:false})
+                if (this.state.Isopen2 === 'visible'){
+                 this.setState({
+                   Isopen2:'hidden'
+                  })
+               }
+             }}
+              onClick={()=>{
+                this.setState({
+                  selectedMarker2:true
+                });
+              }}
+              visible={this.state.sw_info_tag2 && this.state.sw_history2}>
+        
+              {this.state.selectedMarker2 && this.state.sw_history && this.state.sw_info_tag2 && (
+                <InfoWindow
+                 onCloseClick={()=>{
+                   this.setState({
+                      selectedMarker2:null
+                    })
+                  }}>
+                 <div>
+                   {"Tiempo: "+(((new Date(parseFloat(this.state.Infotime2,10))) + "").split("GMT"))[0]}
+                   {"RPM: "+(this.state.Inforpm2)}
+                  </div>
+               </InfoWindow>      
+             )}
+
+            </Marker>
 
           </GoogleMap>
 

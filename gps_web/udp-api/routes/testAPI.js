@@ -153,14 +153,26 @@ function Gethistory2(truck2, time_in, time_fin){
   })
 }
 
-function Gettime(truck, time_in, time_fin){
-  return new Promise ((resolve,reject)=> {
-    con.query((("SELECT timegps FROM truckdata WHERE truck = ").concat((truck).toString()," AND timegps BETWEEN ", (time_in).toString(),' and ',(time_fin).toString())),
-     function(err,result){
-       if(err){throw err};
-       var thistory=JSON.parse(JSON.stringify(result));
-       return err ? reject(err): resolve(thistory);
-     }
+function GetInfo(time_in,time_fin,truck1,position){
+  return new Promise((resolve,reject)=>{
+    con.query((("SELECT timegps FROM truckdata WHERE truck = ").concat((truck1).toString()," AND lat = ",(position.lat).toString()," AND lng = ",(position.lng).toString()," AND timegps BETWEEN ",(time_in).toString()," and ",(time_fin).toString())),
+      function(err,result){
+        if(err){throw err};
+        var info=JSON.parse(JSON.stringify(result));
+        return err ? reject(err): resolve(info)
+      }
+    );
+  });
+}
+
+function GetInfo2(time_in,time_fin,truck2,position){
+  return new Promise((resolve,reject)=>{
+    con.query((("SELECT timegps FROM truckdata WHERE truck = ").concat((truck2).toString()," AND lat = ",(position.lat).toString()," AND lng = ",(position.lng).toString()," AND timegps BETWEEN ",(time_in).toString()," and ",(time_fin).toString())),
+      function(err,result){
+        if(err){throw err};
+        var info=JSON.parse(JSON.stringify(result));
+        return err ? reject(err): resolve(info)
+      }
     );
   });
 }
@@ -252,20 +264,37 @@ router.post("/history2", function(req, res, next) {
   
 });
 
-router.post("/time", function(req, res, next) {
+router.post("/info", function(req, res, next) {
   try{
     var time_in=req.body.timestamp_in;
     var time_fin=req.body.timestamp_fin;
-    var truck=req.body.ID;
-    async function Time(){
-      var thistory= await Gettime(truck,time_in,time_fin);
-      res.json(thistory);
+    var truck1=req.body.ID1;
+    var position=req.body.position;
+    async function Info() {
+      var info = await GetInfo(time_in,time_fin,truck1,position);
+      res.json(info);  
     }
-    Time();
+    Info();
   }catch(error){
     console.error();
   }
-});
+})
+
+router.post("/info2", function(req, res, next) {
+  try{
+    var time_in=req.body.timestamp_in;
+    var time_fin=req.body.timestamp_fin;
+    var truck2=req.body.ID2;
+    var position=req.body.position;
+    async function Info2() {
+      var info = await GetInfo2(time_in,time_fin,truck2,position);
+      res.json(info);  
+    }
+    Info2();
+  }catch(error){
+    console.error();
+  }
+})
 
 router.post("/last", function(req,res, next){
 
