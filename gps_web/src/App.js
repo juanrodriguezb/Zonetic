@@ -89,6 +89,7 @@ class App extends Component {
       history2:[],
       Infotime:0,
       Infotime2:0,
+      Infotime_s:0,
       Infoposition:{
         lat:0,
         lng:0
@@ -99,6 +100,9 @@ class App extends Component {
       },
       Inforpm:0,
       Inforpm2:0,
+      Inforpm_s:0,
+      count:0,
+      count2:0,
       date_in:new Date(),
       date_fin:new Date(),
       openPanel:false,
@@ -113,6 +117,7 @@ class App extends Component {
       sw_his_tag2:false,
       sw_info_tag:false,
       sw_info_tag2:false,
+      sw_second_tag:false,
       sw_tag1:true,
       sw_tag2:false,
       T1 : 1,
@@ -241,15 +246,29 @@ class App extends Component {
 
     .then((res) => {
       var buff = (res.data);
-      console.log(buff[0].timegps);
-      this.setState({
-        Infotime:buff[0].timegps,
-        Infoposition:history_filtered,
-        Inforpm:rpm_filtered,
-        sw_info_tag:true
-      })
+      if(buff[1] === undefined){
+        console.log(buff[0].timegps);
+        this.setState({
+          Infotime:buff[0].timegps,
+          Infoposition:history_filtered,
+          Inforpm:rpm_filtered,
+          sw_info_tag:true
+        })
+      }else{
+        console.log('time 1')
+        console.log(buff[0].timegps)
+        console.log('time 2')
+        console.log(buff[1].timegps)
+        this.setState({
+          Infotime:buff[0].timegps,
+          Infotime_s:buff[1].timegps,
+          Infoposition:history_filtered,
+          Inforpm:rpm_filtered,
+          Inforpm_s: this.state.rpm_filtered + 12,
+          sw_second_tag:true
+        })
+      }
     })
-
   }
 
   callAPI_infohistory2(){
@@ -315,6 +334,75 @@ class App extends Component {
     }).catch(err => console.log(err));
   }
 
+  set_rpm(){
+    if(this.state.T1 === 1 && this.state.T2 === 0){
+      if(!(this.state.count === 10045)){
+        const rm = (this.state.rmp[this.state.count].rpm).toString()
+        this.setState({
+          rm,
+          rm2: "XXXX"
+        });
+        console.log('rm 1')
+        console.log(rm)
+        this.setState({
+          count: ++ this.state.count
+        });
+      }else{
+        this.setState({
+          count: 0
+        });
+      }
+    }else{
+      if(this.state.T1 === 0 && this.state.T2 === 1){
+        if(!(this.state.count2 === 9974)){
+          const rm2 = (this.state.rmp2[this.state.count2].rpm).toString()
+          this.setState({
+            rm: "XXXX",
+            rm2
+          });
+          console.log('rm 2')
+          console.log(rm2)
+          this.setState({
+            count2: ++ this.state.count2
+          });
+        }else{
+          this.setState({
+            count2: 0
+          });
+        }
+      }else{
+        if(this.state.T1 === 1 && this.state.T2 === 1){
+          if(!(this.state.count === 10045 && this.state.count2 == 9974)){
+            rm = (this.state.rmp[this.state.count].rpm).toString()
+            rm2 = (this.state.rmp2[this.state.count2].rpm).toString()
+            this.setState({
+              rm,
+              rm2
+            });
+            console.log('rm 1')
+            console.log(rm)
+            console.log('rm 2')
+            console.log(rm2)
+            this.setState({
+              count: ++ this.state.count,
+              count2: ++ this.state.count2
+            })
+          }else{
+            this.setState({
+              count: 0,
+              count2: 0
+            });
+          }
+        }else{
+          this.setState({
+            rm: "XXXX",
+            rm2: "XXXX"
+          });
+        }
+      }
+    }
+  }
+
   set_timer1(){
     this.timer1 = setInterval(()=>{this.callAPI_actual()}, 1000);
   }
@@ -339,6 +427,10 @@ class App extends Component {
     this.timer7 = setInterval(()=>{this.callAPI_rmp2()},1000);
   }
 
+  set_timer8(){
+    this.timer8 = setInterval(()=>{this.set_rpm()}, 1000);
+  }
+
   componentDidMount(){
     console.log("Al components mounted");
     this.set_timer1();
@@ -347,6 +439,7 @@ class App extends Component {
     this.set_timer4();
     this.set_timer6();
     this.set_timer7();
+    this.set_timer8();
   }
 
   set_truck1_checked(){
@@ -365,7 +458,8 @@ class App extends Component {
     this.setState({T2: 0});
   }
 
-  render(){return (
+  render(){
+    return (
 
   
     <div>
@@ -414,6 +508,23 @@ class App extends Component {
         </h4>
       </div>
 
+      <div style={{position:"absolute", top:"63%", left:"1%", width:"11.5%", height:"18.5%", backgroundColor:"white", zIndex:5}}>
+      </div>
+      <div>
+        <h4 style={{top:"64%", left:"2%"}}>
+          RPM Truck 1
+        </h4>
+        <h4 style={{top:"68.5%", left:"2%"}}>
+          <body>{"RPM: "+this.state.rm}</body>
+        </h4>
+        <h4 style={{top:"73%", left:"2%"}}>
+          RPM Truck 2
+        </h4>
+        <h4 style={{top:"77.5%", left:"2%"}}>
+          <body>{"RPM: "+this.state.rm2}</body>
+        </h4>
+      </div>
+
       <SlidingPanel
         type={'left'}
        isOpen={this.state.openPanel}
@@ -429,10 +540,10 @@ class App extends Component {
    
         <div style={{position:'absolute',top:'0px',left:'0px',zIndex:'5',width:'32%',height:'100%',backgroundColor:'white'}}>
         </div>
+        <h2 style={{top:"5%", left:"2%", zIndex:"10", position:"absolute"}}>OPTION'S MENU </h2>
+        <h5 style={{top:"12%",left:"2%",zIndex:"10",position:"absolute"}}>Real time position:</h5>
 
-        <h5 style={{top:"5%",left:"2%",zIndex:"10",position:"absolute"}}>Real time position:</h5>
-
-        <div style={{position:'absolute',top:"7.5%",left:"11.5%",zIndex:"10"}}>
+        <div style={{position:'absolute',top:"14.5%",left:"11.5%",zIndex:"10"}}>
         <Switch
           onColor={ '#A5C137'}
           checked={this.state.sw_realtime}
@@ -476,9 +587,9 @@ class App extends Component {
         />
        </div>
 
-        <h5 style={{top:"10%",left:"2%",zIndex:"10",position:"absolute"}}>View Timeline:</h5>
+        <h5 style={{top:"17%",left:"2%",zIndex:"10",position:"absolute"}}>View Timeline:</h5>
 
-        <div style={{position:"absolute",top:"12.5%",left:"11.5%",zIndex:"10"}}>
+        <div style={{position:"absolute",top:"19.5%",left:"11.5%",zIndex:"10"}}>
         <Switch
           onColor={ '#A5C137'}
           checked={this.state.sw_history}
@@ -519,9 +630,9 @@ class App extends Component {
         /> 
         </div>
 
-        <h5 style={{position:"absolute",top:"17%",left:"2%",zIndex:"10"}}>Initial date: </h5>
+        <h5 style={{position:"absolute",top:"24%",left:"2%",zIndex:"10"}}>Initial date: </h5>
 
-        <div style={{position:"absolute",top:"24%",left:"2%",zIndex:"12"}}>
+        <div style={{position:"absolute",top:"31%",left:"2%",zIndex:"12"}}>
         <DateTimePicker
           returnValue={'start'}
           onChange={(value) => this.setState({date_in: value})}
@@ -530,9 +641,9 @@ class App extends Component {
         />
         </div>
 
-        <h5 style={{position:'absolute',top:"26%",left:"2%",zIndex:"10"}}>Final date: </h5>
+        <h5 style={{position:'absolute',top:"33%",left:"2%",zIndex:"10"}}>Final date: </h5>
 
-        <div style={{position:'absolute',top:"33%",left:"2%",zIndex:"11"}}>
+        <div style={{position:'absolute',top:"40%",left:"2%",zIndex:"11"}}>
         <DateTimePicker
           returnValue={'start'}
           onChange={(value) => this.setState({date_fin: value})}
@@ -541,9 +652,9 @@ class App extends Component {
           />
         </div>
 
-          <h5 style={{top:"37.5%",left:"2%",zIndex:"10",position:"absolute"}}>Truck 1:</h5>
+          <h5 style={{top:"44.5%",left:"2%",zIndex:"10",position:"absolute"}}>Truck 1:</h5>
 
-          <div style={{position:"absolute",top:"40%",left:"11.5%",zIndex:"10"}}>
+          <div style={{position:"absolute",top:"47%",left:"11.5%",zIndex:"10"}}>
             <Switch
               onColor={ '#A5C137'}
               checked={this.state.sw_truck1}
@@ -561,9 +672,9 @@ class App extends Component {
             /> 
           </div>
 
-          <h5 style={{top:"42.5%",left:"2%",zIndex:"10",position:"absolute"}}>Truck 2:</h5>
+          <h5 style={{top:"49.5%",left:"2%",zIndex:"10",position:"absolute"}}>Truck 2:</h5>
 
-          <div style={{position:"absolute",top:"45%",left:"11.5%",zIndex:"10"}}>
+          <div style={{position:"absolute",top:"52%",left:"11.5%",zIndex:"10"}}>
             <Switch
               onColor={ '#A5C137'}
               checked={this.state.sw_truck2}
@@ -580,9 +691,6 @@ class App extends Component {
               }}
             />
           </div>
-          <div style={{top: "50%", left: "15..5%", zIndex:"10"}}>
-              <img src="./zico.png" alt="Zonetic's logo"></img>
-          </div>
       </SlidingPanel>
 
       <div>
@@ -596,7 +704,7 @@ class App extends Component {
             options={options}
            > 
 
-            <Polyline
+            <Polyline    //POLILINEA TRUCK 1
               visible={this.state.sw_history && this.state.sw_truck1}
               path={this.state.history}
               options={{
@@ -619,7 +727,7 @@ class App extends Component {
               }}
            />
 
-            <Polyline
+            <Polyline    //POLILINEA TRUCK 2
               visible={this.state.sw_history && this.state.sw_truck2}
               path={this.state.history2}
               options={{
@@ -694,7 +802,7 @@ class App extends Component {
                 });
               }}
               visible={this.state.sw_info_tag && this.state.sw_history}>
-        
+                
               {this.state.selectedMarker && this.state.sw_history && this.state.sw_info_tag && (
                 <InfoWindow
                  onCloseClick={()=>{
